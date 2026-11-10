@@ -259,16 +259,10 @@ async def test_server(name: str, payload: ServerPayload) -> dict[str, Any]:
     Runs under the caller's own owner id so the probe obeys the same address
     policy and redirect rule the real connection will — a Test more permissive
     than the connection it previews is worse than no Test at all.
-
-    Deliberately side-effect free: nothing is written, so the incoming config is
-    probed as given (any literal credential in it is used in memory only). That
-    also means a caller may probe under a scratch name the store would refuse,
-    which is how the UI tests a draft before it has one.
     """
-    _ = name  # part of the path for symmetry with PUT; the probe is stateless
     owner = current_owner_id()
     resolved = _resolve_for_probe(owner, payload.config)
-    return await probe_server(resolved, owner=owner)
+    return await probe_server(resolved, owner=owner, server_name=name)
 
 
 def _resolve_for_probe(owner: str, config: MCPServerConfig) -> MCPServerConfig:

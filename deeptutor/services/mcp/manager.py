@@ -939,6 +939,7 @@ async def probe_server(
     *,
     timeout: int = _CONNECT_TIMEOUT_S,
     owner: str = SHARED_OWNER,
+    server_name: str = "",
 ) -> dict[str, Any]:
     """One-off connect + list_tools for a Test button.
 
@@ -946,6 +947,11 @@ async def probe_server(
     the *owner* so the probe runs under the same address policy, redirect rule,
     and stored credentials the real connection would use — a Test that is more
     permissive than the connection it previews is worse than no Test.
+
+    *server_name* keys the OAuth store an ``auth: oauth`` probe reads and, when
+    the SDK registers a client or refreshes a token, writes (#2587: with the
+    default empty name the store refused the write and every OAuth Test died
+    with "Unsafe MCP server name"). 
     """
     from contextlib import AsyncExitStack
 
@@ -958,7 +964,9 @@ async def probe_server(
         # covered by the type gate.
         tools: list[dict[str, str]] = []
         async with AsyncExitStack() as stack:
-            read, write = await MCPConnectionManager._open_transport(stack, cfg, owner=owner)
+            read, write = await MCPConnectionManager._open_transport(
+                stack, cfg, owner=owner, server_name=server_name
+            )
             session = await stack.enter_async_context(ClientSession(read, write))
             await session.initialize()
             listing = await session.list_tools()
